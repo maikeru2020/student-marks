@@ -1,0 +1,33 @@
+<%
+    var studentName = marks[0].first_name + ' ' + marks[0].last_name;
+    var studentId = marks[0].student_id;
+%>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Edit Student Marks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="main.js"></script>
+</head>
+<body>
+    <h1>Edit <%=studentName %>'s Marks</h1>
+    <table>
+        <% for (let i = 0; i < 4; i++) { %>
+        <tr>
+            <td><%=marks[i].task_name %></td>
+            <td><input type="number" id="<%=i %>" value="<%=marks[i].score %>" min="0" max="<%=marks[i].max_score %>"></td>
+        </tr>
+        <% } %>
+        <tr><td>Total Sba Score</td><td id="totalSba"></td></tr>
+        <tr><td>50%</td><td id="halfSba"></td></tr>
+        <tr><td>End of Term Exam</td><td><input type="number" id="4" value="<%=marks[4].score %>" min="0" max="100"></td></tr>
+        <tr><td>50%</td><td id="halfExam"></td></tr>
+        <tr><td>Overall Total (50 + 50)</td><td id="overallTotal"></td></tr>   
+    </table><br>
+    <input type="hidden" id="studentId" value="<%=studentId %>">
+    <button onclick="saveMarks();">Save Marks</button>
+</body>
+</html>
