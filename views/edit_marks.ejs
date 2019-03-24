@@ -8,9 +8,10 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Edit Student Marks</title>
+    <link rel="stylesheet" type="text/css" href="main.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="main.js"></script>
+    <script src="edit_marks.js"></script>
 </head>
 <body>
     <h1>Edit <%=studentName %>'s Marks</h1>
@@ -21,7 +22,7 @@
             <td><input type="number" id="<%=i %>" value="<%=marks[i].score %>" min="0" max="<%=marks[i].max_score %>"></td>
         </tr>
         <% } %>
-        <tr><td>Total Sba Score</td><td id="totalSba"></td></tr>
+        <tr><td>Total SBA Score</td><td id="totalSba"></td></tr>
         <tr><td>50%</td><td id="halfSba"></td></tr>
         <tr><td>End of Term Exam</td><td><input type="number" id="4" value="<%=marks[4].score %>" min="0" max="100"></td></tr>
         <tr><td>50%</td><td id="halfExam"></td></tr>

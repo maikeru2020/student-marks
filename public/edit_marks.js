@@ -10,7 +10,7 @@ function saveMarks() {
 
     // AJAX call to update marks in database
     outData = {'marks[]': [studentId, classTest1, groupExercise, classTest2, projectHomework, exam]};
-    $.get('updateMarks', outData, function(data, status) {
+    $.get('updateMarks', outData, function(data) {
         if (data == "done") {
             updateDisplay();
         }
@@ -30,14 +30,13 @@ function updateDisplay() {
     var halfExam = exam / 2;
     var overallTotal = halfSba + halfExam;
     $('#totalSba').html(totalSba);
-    $('#totalSbaB').html(totalSba);
     $('#halfSba').html(halfSba);
     $('#halfExam').html(halfExam);
     $('#overallTotal').html(overallTotal);
 
 }
 
-// call updateScreen() when the page loads
+// call updateDisplay() when the page loads
 $(document).ready(function() {
     updateDisplay();
 });
