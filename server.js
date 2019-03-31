@@ -3,10 +3,17 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 5000;
 const bcrypt = require('bcrypt');
+const session = require('express-session');
 
-app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+app.use(session({
+    secret: "twilight",
+    resave: false,
+    saveUninitialized: true
+}));
+
+
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 require('dotenv').config();
@@ -16,23 +23,26 @@ const {Pool} = require('pg');
 const dbUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/elessonplan';
 const pool = new Pool({connectionString: dbUrl});
 
-// root redirects to sign in page
-app.get('/', function(req, res) {
-    res.redirect('sign_in.html');
-});
+app.use(express.static('public'));
 
+app.get('/', (req, res) => res.redirect('sign_in.html'));
 // get marks data and render edit_marks.ejs
 app.get('/editMarks', function(req, res) {
-    var sql = 'SELECT m.score, t.task_name, t.max_score, m.student_id, s.first_name, s.last_name FROM marks m JOIN tasks t ON t.id = m.task_id JOIN students s ON s.id = m.student_id WHERE student_id = $1';
-    values = [Number(req.query.student_id)];
-    pool.query(sql, values, function(err, result) {
-        if (err) {
-            console.log(err);
-        } else {
-            marks = result.rows;
-            res.render('edit_marks', marks);
-        }
-    });
+    if (req.session.accountType == "teacher") {
+        var sql = 'SELECT m.score, t.task_name, t.max_score, m.student_id, s.first_name, s.last_name FROM marks m JOIN tasks t ON t.id = m.task_id JOIN students s ON s.id = m.student_id WHERE student_id = $1';
+        values = [Number(req.query.student_id)];
+        pool.query(sql, values, function(err, result) {
+            if (err) {
+                console.log(err);
+            } else {
+                marks = result.rows;
+                res.render('edit_marks', marks);
+            }
+        });
+    }
+    else {
+        res.redirect('sign_in.html');
+    }
 })
 
 // update marks data in database
@@ -54,7 +64,7 @@ app.get('/updateMarks', function(req, res) {
 });
 
 // insert new user in database
-// called from create_account.html by admin account
+// called from create_account page by admin account
 app.post('/insertUser', function(req, res) {
     var firstName = req.body.firstName;
     var lastName = req.body.lastName;
@@ -73,7 +83,7 @@ app.post('/insertUser', function(req, res) {
             if (err) {
                 console.log(err);
             } else {
-                res.send(username + " inserted into database");
+                res.json({message: "'" + username + "' inserted into database"});
             }
         })
     });
@@ -99,60 +109,80 @@ app.post('/signIn', function(req, res) {
                 // make sure password matches hash
                 bcrypt.compare(password, passwordHash, function(err, match) {
                     if (match) {
+                        req.session.userId = userId;
                         switch(accountType) {
                             // parent
                             case 1:
-                                res.redirect('displayMarks?parentId=' + userId);
+                                req.session.accountType = "parent";
+                                res.json({redirect: true, route: 'displayMarks'});
                                 break;
                             // teacher    
                             case 2:
-                                res.redirect('selectStudents?teacherId=' + userId);
+                                req.session.accountType = "teacher";
+                                res.json({redirect: true, route: 'selectStudents'});
                                 break;
                             // admin
                             case 3:
-                                res.redirect('create_account.html');
+                                req.session.accountType = "admin";
+                                res.json({redirect: true, route: 'createAccount'});
                         }
                     } else {
-                        res.redirect('sign_in.html');
+                        res.json({message: "Invalid Login"});
                     }
                 });
             } else {
-                res.redirect('sign_in.html');
+                res.json({message: "Invalid Login"})
             }
         }
     });
-})
+});
 
 // get student info to create dropdown and render select_student.ejs
 app.get('/selectStudents', function(req, res) {
-    var teacherId = req.query.teacherId;
-    var sql = 'SELECT s.id, s.first_name, s.last_name FROM students s JOIN student_teacher st ON s.id=st.student_id WHERE st.teacher_id=$1';
-    var values = [teacherId];
-    pool.query(sql, values, function(err, result) {
-        if (err) {
-            console.log(err);
-        } else {
-            var students = result.rows;
-            res.render('select_student', {students: result.rows});
-        }
-    });
+    if (req.session.accountType == 'teacher') {
+        var teacherId = req.session.userId;
+        var sql = 'SELECT s.id, s.first_name, s.last_name FROM students s JOIN student_teacher st ON s.id=st.student_id WHERE st.teacher_id=$1';
+        var values = [teacherId];
+        pool.query(sql, values, function(err, result) {
+            if (err) {
+                console.log(err);
+            } else {
+                var students = result.rows;
+                res.render('select_student', {students: result.rows});
+            }
+        });
+    } else {
+        res.redirect('sign_in.html');
+    }
 })
 
 // get marks data and render display_marks.ejs
 app.get('/displayMarks', function(req, res) {
-    var parentId = req.query.parentId;
-    var sql = 'SELECT m.score, m.task_id, t.task_name, t.max_score, s.first_name, s.last_name FROM marks m JOIN tasks t ON t.id = m.task_id JOIN students s ON s.id = m.student_id JOIN student_parent sp ON s.id = sp.student_id WHERE sp.parent_id = $1 ORDER BY m.task_id';
-    values = [Number(parentId)];
-    pool.query(sql, values, function(err, result) {
-        if (err) {
-            console.log(err);
-            res.end();
-        } else {
-            marks = result.rows;
-            res.render('display_marks', marks);
-        }
-    });
+    if (req.session.accountType == 'parent') {
+        var parentId = req.session.userId;
+        var sql = 'SELECT m.score, m.task_id, t.task_name, t.max_score, s.first_name, s.last_name FROM marks m JOIN tasks t ON t.id = m.task_id JOIN students s ON s.id = m.student_id JOIN student_parent sp ON s.id = sp.student_id WHERE sp.parent_id = $1 ORDER BY m.task_id';
+        values = [Number(parentId)];
+        pool.query(sql, values, function(err, result) {
+            if (err) {
+                console.log(err);
+                res.end();
+            } else {
+                marks = result.rows;
+                res.render('display_marks', marks);
+            }
+        });
+    } else {
+        res.redirect('sign_in.html');
+    }
 
+});
+
+app.get('/createAccount', function(req, res) {
+    if (req.session.accountType == 'admin') {
+        res.render('create_account');
+    } else {
+        res.redirect('sign_in.html');
+    }
 });
 
 app.listen(port, () => console.log("Connected on port " + port));

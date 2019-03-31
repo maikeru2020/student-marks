@@ -1,6 +1,7 @@
 body {
     text-align: center;
-    background-color: goldenrod;
+    background-color: tan;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 td {
@@ -15,4 +16,9 @@ table {
 .leftAlign {
     display: inline-block;
     text-align: left;
+}
+
+.message {
+    color: red;
+    margin-bottom: 10px;
 }

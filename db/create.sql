@@ -56,10 +56,10 @@ VALUES (29, 1, 1), (10, 2, 1), (30, 3, 1), (19, 4, 1), (95, 5, 1),
        (15, 1, 3), (10, 2, 3), (15, 3, 3), (10, 4, 3), (75, 5, 3);
 
 INSERT INTO student_teacher (student_id, teacher_id)
-VALUES (1, 2), (2, 2), (3, 2);
+VALUES (1, 4), (2, 4), (3, 4);
 
 INSERT INTO student_parent (student_id, parent_id)
-VALUES (1, 3), (2, 5), (3, 4);
+VALUES (1, 1), (2, 3), (3, 2);
 
 DROP TABLE marks;
 DROP TABLE tasks;
